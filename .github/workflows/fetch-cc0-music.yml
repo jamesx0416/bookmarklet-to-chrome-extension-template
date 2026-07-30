@@ -6,19 +6,26 @@ on:
       - .github/workflows/fetch-cc0-music.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
-      - name: Download CC0 track
+      - uses: actions/checkout@v4
+      - name: Download and encode CC0 track
         run: |
           curl --fail --location --retry 3 --output remember-the-time.ogg "https://upload.wikimedia.org/wikipedia/commons/d/d8/Komiku_-_02_-_Remember_the_time_we_use_to_play.ogg"
           test "$(stat -c%s remember-the-time.ogg)" -gt 1000000
-      - name: Upload music artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: cc0-background-music
-          path: remember-the-time.ogg
-          retention-days: 1
+          rm -rf .cc0_audio
+          mkdir .cc0_audio
+          base64 -w 0 remember-the-time.ogg | split -b 400000 - .cc0_audio/part_
+          stat -c%s remember-the-time.ogg > .cc0_audio/size.txt
+          sha256sum remember-the-time.ogg > .cc0_audio/sha256.txt
+      - name: Commit encoded track temporarily
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .cc0_audio
+          git commit -m "Temporarily store CC0 music transfer"
+          git push
