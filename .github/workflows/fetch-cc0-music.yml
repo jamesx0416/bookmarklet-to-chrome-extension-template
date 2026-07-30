@@ -1,0 +1,24 @@
+name: Fetch CC0 music
+
+on:
+  push:
+    paths:
+      - .github/workflows/fetch-cc0-music.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download CC0 track
+        run: |
+          curl --fail --location --retry 3 --output remember-the-time.ogg "https://upload.wikimedia.org/wikipedia/commons/d/d8/Komiku_-_02_-_Remember_the_time_we_use_to_play.ogg"
+          test "$(stat -c%s remember-the-time.ogg)" -gt 1000000
+      - name: Upload music artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc0-background-music
+          path: remember-the-time.ogg
+          retention-days: 1
